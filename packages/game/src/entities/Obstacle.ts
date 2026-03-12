@@ -1,7 +1,7 @@
 import {
 	GAME_WIDTH,
 	GROUND_VISUAL_Y,
-	OBSTACLE_EMBED_RATIO,
+	OBSTACLE_GROUND_Y,
 	OBSTACLE_TYPES,
 	type ObstacleType,
 	SeededRandom,
@@ -30,10 +30,10 @@ export class Obstacle {
 		const inset = 4 * OBSTACLE_SCALE; // tighter inset: 8px per side at 2x scale
 		const w = this.sprite.displayWidth;
 		const h = this.sprite.displayHeight;
-		const visibleH = h * (1 - OBSTACLE_EMBED_RATIO);
+		const visibleH = Math.min(h, this.sprite.y - GROUND_VISUAL_Y);
 		this._boundsRect.setTo(
 			this.sprite.x - w / 2 + inset,
-			this.sprite.y - h + inset,
+			GROUND_VISUAL_Y + inset,
 			w - inset * 2,
 			visibleH - inset * 2,
 		);
@@ -54,8 +54,7 @@ export class Obstacle {
 		this.active = true;
 		this.sprite.setVisible(true);
 		this.sprite.x = x ?? GAME_WIDTH + 50;
-		// Push bottom half of sprite below GROUND_VISUAL_Y so the ground tile clips it
-		this.sprite.y = GROUND_VISUAL_Y + this.sprite.displayHeight * OBSTACLE_EMBED_RATIO;
+		this.sprite.y = OBSTACLE_GROUND_Y;
 	}
 
 	update(speed: number, delta: number) {
