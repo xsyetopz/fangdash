@@ -25,7 +25,8 @@ const REQUIRED_AUTH_KEYS = [
 export function createAuth(env: AuthBindings) {
 	const missing = REQUIRED_AUTH_KEYS.filter((k) => !env[k]);
 	if (missing.length > 0) {
-		throw new Error(`Missing required auth env vars: ${missing.join(", ")}`);
+		console.warn(`[auth] Auth disabled — missing env vars: ${missing.join(", ")}`);
+		return null;
 	}
 	if (!env.DB) {
 		throw new Error("Missing required D1 database binding: DB");
@@ -109,4 +110,4 @@ export function createAuth(env: AuthBindings) {
 	});
 }
 
-export type Auth = ReturnType<typeof createAuth>;
+export type Auth = NonNullable<ReturnType<typeof createAuth>>;
