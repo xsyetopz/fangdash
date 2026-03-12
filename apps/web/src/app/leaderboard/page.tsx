@@ -221,7 +221,10 @@ export default function LeaderboardPage() {
 							)}
 							{!leaderboardQuery.isLoading && entries.length === 0 && (
 								<tr>
-									<td colSpan={activeDifficulty === "all" ? 6 : 5} className="px-4 py-12 text-center text-gray-500">
+									<td
+										colSpan={activeDifficulty === "all" ? 6 : 5}
+										className="px-4 py-12 text-center text-gray-500"
+									>
 										No scores yet. Be the first to play!
 									</td>
 								</tr>
@@ -294,9 +297,7 @@ export default function LeaderboardPage() {
 										{entry.username}
 										{isCurrentUser && <span className="ml-2 text-xs text-[#0FACED]">(you)</span>}
 									</span>
-									{activeDifficulty === "all" && (
-										<DifficultyBadge difficulty={entry.difficulty} />
-									)}
+									{activeDifficulty === "all" && <DifficultyBadge difficulty={entry.difficulty} />}
 								</div>
 								<div className="mt-3 flex items-center gap-4 text-sm">
 									<div>

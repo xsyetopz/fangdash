@@ -36,7 +36,6 @@ export const GROUND_HEIGHT = 100;
 export const GROUND_VISUAL_Y = GAME_HEIGHT - GROUND_HEIGHT; // 500 — top edge of the dirt strip
 export const PLAYER_START_X = 150;
 
-
 // ── Multiplayer ──
 export const MAX_PLAYERS_PER_RACE = 4;
 export const RACE_COUNTDOWN_SECONDS = 3;
