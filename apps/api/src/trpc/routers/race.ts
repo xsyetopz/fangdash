@@ -98,7 +98,12 @@ export const raceRouter = router({
 				);
 				newAchievements = achievementResult.newAchievements;
 				newSkins = [...achievementResult.newSkins, ...newSkinUnlocks];
-			} catch {
+			} catch (err) {
+				console.error("[race.submitResult] Achievement/skin check failed", {
+					playerId: playerRecord.id,
+					raceHistoryId,
+					error: err,
+				});
 				achievementError = true;
 			}
 

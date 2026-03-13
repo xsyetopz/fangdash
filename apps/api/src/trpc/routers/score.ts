@@ -94,7 +94,12 @@ export const scoreRouter = router({
 				);
 				newAchievements = achievementResult.newAchievements;
 				newSkins = [...achievementResult.newSkins, ...newSkinUnlocks];
-			} catch {
+			} catch (err) {
+				console.error("[score.submit] Achievement/skin check failed", {
+					playerId: playerRecord.id,
+					scoreId,
+					error: err,
+				});
 				achievementError = true;
 			}
 
