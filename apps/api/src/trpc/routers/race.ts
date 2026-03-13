@@ -1,3 +1,5 @@
+import { TRPCError } from "@trpc/server";
+import { getLevelFromXp } from "@fangdash/shared";
 import { count, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { player, raceHistory } from "../../db/schema.ts";
@@ -19,7 +21,7 @@ export const raceRouter = router({
 		.mutation(async ({ ctx, input }) => {
 			const playerRecord = await ensurePlayer(ctx.db, ctx.user.id);
 			if (!playerRecord) {
-				throw new Error("Failed to create player");
+				throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create player" });
 			}
 
 			// Compute placement server-side
@@ -55,18 +57,47 @@ export const raceRouter = router({
 
 			await ctx.db.update(player).set(updateSet).where(eq(player.id, playerRecord.id));
 
-			// Check achievements and skin unlocks after race submission
-			const achievementResult = await checkAchievements(ctx.db, playerRecord.id);
-			const newSkinUnlocks = await checkSkinUnlocks(
-				ctx.db,
-				playerRecord.id,
-				achievementResult.stats,
-			);
+			// Award XP: score + placement bonus
+			const placementBonus = placement === 1 ? 500 : placement === 2 ? 250 : placement === 3 ? 100 : 0;
+			const xpGained = input.score + placementBonus;
+			const newTotalXp = playerRecord.totalXp + xpGained;
+			const levelInfo = getLevelFromXp(newTotalXp);
+			const previousLevel = playerRecord.level;
+
+			await ctx.db
+				.update(player)
+				.set({
+					totalXp: newTotalXp,
+					level: levelInfo.level,
+				})
+				.where(eq(player.id, playerRecord.id));
+
+			let newAchievements: string[] = [];
+			let newSkins: string[] = [];
+			let achievementError = false;
+
+			try {
+				const achievementResult = await checkAchievements(ctx.db, playerRecord.id);
+				const newSkinUnlocks = await checkSkinUnlocks(
+					ctx.db,
+					playerRecord.id,
+					achievementResult.stats,
+				);
+				newAchievements = achievementResult.newAchievements;
+				newSkins = [...achievementResult.newSkins, ...newSkinUnlocks];
+			} catch {
+				achievementError = true;
+			}
 
 			return {
 				raceHistoryId,
-				newAchievements: achievementResult.newAchievements,
-				newSkins: [...achievementResult.newSkins, ...newSkinUnlocks],
+				placement,
+				newAchievements,
+				newSkins,
+				achievementError,
+				xpGained,
+				levelUp: levelInfo.level > previousLevel,
+				newLevel: levelInfo.level,
 			};
 		}),
 

@@ -5,7 +5,9 @@ export class ScoreManager {
 	score = 0;
 	distance = 0;
 	obstaclesCleared = 0;
+	longestCleanRun = 0;
 	private lastObstacleCount = 0;
+
 
 	// Runtime-overridable constants (for debug menu)
 	overrides: {
@@ -37,6 +39,7 @@ export class ScoreManager {
 			obstaclesCleared: this.obstaclesCleared,
 			alive,
 			speed,
+			longestCleanRun: Math.floor(this.distance),
 		};
 	}
 
@@ -45,5 +48,6 @@ export class ScoreManager {
 		this.distance = 0;
 		this.obstaclesCleared = 0;
 		this.lastObstacleCount = 0;
+		this.longestCleanRun = 0;
 	}
 }

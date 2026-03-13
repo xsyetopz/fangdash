@@ -14,6 +14,7 @@ export interface PlayerStats {
 	gamesPlayed: number;
 	racesPlayed: number;
 	racesWon: number;
+	longestCleanRun: number;
 }
 
 export interface CheckStats {
@@ -34,7 +35,7 @@ interface CheckResult {
 export async function checkAchievements(
 	db: DrizzleD1Database<typeof schema>,
 	playerId: string,
-	latestScore?: { score: number; distance: number; obstaclesCleared: number },
+	latestScore?: { score: number; distance: number; obstaclesCleared: number; longestCleanRun?: number },
 ): Promise<CheckResult> {
 	// Get player stats
 	const playerRecord = await db.select().from(player).where(eq(player.id, playerId)).get();
@@ -78,6 +79,7 @@ export async function checkAchievements(
 		gamesPlayed: playerRecord.gamesPlayed,
 		racesPlayed: playerRecord.racesPlayed,
 		racesWon: playerRecord.racesWon,
+		longestCleanRun: latestScore?.longestCleanRun ?? 0,
 	};
 
 	const checkStats: CheckStats = {
@@ -164,9 +166,7 @@ export function isAchievementEarned(
 		case "races_played":
 			return stats.racesPlayed >= condition.count;
 		case "perfect_run":
-			// This requires special tracking from the game client.
-			// For now, we can't check this server-side without additional data.
-			return false;
+			return stats.longestCleanRun >= condition.distance;
 		default:
 			return false;
 	}
