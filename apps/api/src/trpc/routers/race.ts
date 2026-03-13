@@ -175,7 +175,12 @@ export const raceRouter = router({
 			// Block 1: achievements
 			let checkStats: import("../../lib/achievement-checker.ts").CheckStats | undefined;
 			try {
-				const achievementResult = await checkAchievements(ctx.db, playerRecord.id);
+				const achievementResult = await checkAchievements(ctx.db, playerRecord.id, {
+					score: input.score,
+					distance: input.distance,
+					obstaclesCleared: 0,
+					longestCleanRun: 0,
+				});
 				newAchievements = achievementResult.newAchievements;
 				newSkins.push(...achievementResult.newSkins);
 				checkStats = achievementResult.stats;
