@@ -101,9 +101,9 @@ describe("isAchievementEarned", () => {
 		const achievement = makeAchievement({ type: "obstacles_cleared", count: 1000 });
 
 		it("test_obstacles_cleared_at_count_returns_true", () => {
-			expect(
-				isAchievementEarned(achievement, makeStats({ totalObstaclesCleared: 1000 })),
-			).toBe(true);
+			expect(isAchievementEarned(achievement, makeStats({ totalObstaclesCleared: 1000 }))).toBe(
+				true,
+			);
 		});
 
 		it("test_obstacles_cleared_below_count_returns_false", () => {
@@ -141,15 +141,11 @@ describe("isAchievementEarned", () => {
 		const achievement = makeAchievement({ type: "perfect_run", distance: 1000 });
 
 		it("test_perfect_run_at_distance_returns_true", () => {
-			expect(isAchievementEarned(achievement, makeStats({ longestCleanRun: 1000 }))).toBe(
-				true,
-			);
+			expect(isAchievementEarned(achievement, makeStats({ longestCleanRun: 1000 }))).toBe(true);
 		});
 
 		it("test_perfect_run_below_distance_returns_false", () => {
-			expect(isAchievementEarned(achievement, makeStats({ longestCleanRun: 999 }))).toBe(
-				false,
-			);
+			expect(isAchievementEarned(achievement, makeStats({ longestCleanRun: 999 }))).toBe(false);
 		});
 
 		it("test_perfect_run_zero_returns_false", () => {

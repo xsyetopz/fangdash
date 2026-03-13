@@ -215,7 +215,7 @@ export function GameOverModal({
 						</p>
 					)}
 
-				{/* Sign-in nudge */}
+					{/* Sign-in nudge */}
 					{isSignedIn === false && (
 						<p className="mb-4 text-sm text-center font-mono text-white/40">
 							Sign in to save scores &amp; unlock achievements
