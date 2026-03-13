@@ -95,6 +95,7 @@ export const score = sqliteTable(
 		obstaclesCleared: integer("obstacles_cleared").notNull(),
 		duration: integer("duration").notNull(),
 		difficulty: text("difficulty").notNull().default("easy"),
+		longestCleanRun: integer("longest_clean_run").notNull().default(0),
 		seed: text("seed").notNull(),
 		createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 	},

@@ -51,25 +51,14 @@ export const scoreRouter = router({
 				score: input.score,
 				distance: input.distance,
 				obstaclesCleared: input.obstaclesCleared,
+				longestCleanRun: input.longestCleanRun,
 				duration: input.duration,
 				difficulty: input.difficulty,
 				seed: input.seed,
 				createdAt: now,
 			});
 
-			// Update player aggregate stats
-			await ctx.db
-				.update(player)
-				.set({
-					totalScore: sql`${player.totalScore} + ${input.score}`,
-					totalDistance: sql`${player.totalDistance} + ${input.distance}`,
-					totalObstaclesCleared: sql`${player.totalObstaclesCleared} + ${input.obstaclesCleared}`,
-					gamesPlayed: sql`${player.gamesPlayed} + 1`,
-					updatedAt: now,
-				})
-				.where(eq(player.id, playerRecord.id));
-
-			// Update XP and recalculate level
+			// Update player aggregate stats, XP, and level atomically
 			const newTotalXp = playerRecord.totalXp + input.score;
 			const levelInfo = getLevelFromXp(newTotalXp);
 			const previousLevel = playerRecord.level;
@@ -77,8 +66,13 @@ export const scoreRouter = router({
 			await ctx.db
 				.update(player)
 				.set({
-					totalXp: newTotalXp,
+					totalScore: sql`${player.totalScore} + ${input.score}`,
+					totalDistance: sql`${player.totalDistance} + ${input.distance}`,
+					totalObstaclesCleared: sql`${player.totalObstaclesCleared} + ${input.obstaclesCleared}`,
+					gamesPlayed: sql`${player.gamesPlayed} + 1`,
+					totalXp: sql`${player.totalXp} + ${input.score}`,
 					level: levelInfo.level,
+					updatedAt: now,
 				})
 				.where(eq(player.id, playerRecord.id));
 

@@ -24,30 +24,58 @@ export const raceRouter = router({
 				throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create player" });
 			}
 
-			// Compute placement server-side
+			const now = new Date();
+			const raceHistoryId = crypto.randomUUID();
+
+			// Insert with provisional placement
 			const countRows = await ctx.db
 				.select({ total: count() })
 				.from(raceHistory)
 				.where(eq(raceHistory.raceId, input.raceId));
-			const placement = (countRows[0]?.total ?? 0) + 1;
-
-			const now = new Date();
-			const raceHistoryId = crypto.randomUUID();
+			const provisionalPlacement = (countRows[0]?.total ?? 0) + 1;
 
 			await ctx.db.insert(raceHistory).values({
 				id: raceHistoryId,
 				raceId: input.raceId,
 				playerId: playerRecord.id,
-				placement,
+				placement: provisionalPlacement,
 				score: input.score,
 				distance: input.distance,
 				seed: input.seed,
 				createdAt: now,
 			});
 
-			// Update player race stats
+			// Determine authoritative placement by score ranking
+			const allResults = await ctx.db
+				.select({ id: raceHistory.id })
+				.from(raceHistory)
+				.where(eq(raceHistory.raceId, input.raceId))
+				.orderBy(desc(raceHistory.score));
+
+			const placement =
+				allResults.findIndex((r) => r.id === raceHistoryId) + 1 || provisionalPlacement;
+
+			// Correct stored placement if it differs
+			if (placement !== provisionalPlacement) {
+				await ctx.db
+					.update(raceHistory)
+					.set({ placement })
+					.where(eq(raceHistory.id, raceHistoryId));
+			}
+
+			// Award XP: score + placement bonus
+			const placementBonus =
+				placement === 1 ? 500 : placement === 2 ? 250 : placement === 3 ? 100 : 0;
+			const xpGained = input.score + placementBonus;
+			const newTotalXp = playerRecord.totalXp + xpGained;
+			const levelInfo = getLevelFromXp(newTotalXp);
+			const previousLevel = playerRecord.level;
+
+			// Atomic update: race stats + XP/level
 			const updateSet: Record<string, unknown> = {
 				racesPlayed: sql`${player.racesPlayed} + 1`,
+				totalXp: sql`${player.totalXp} + ${xpGained}`,
+				level: levelInfo.level,
 				updatedAt: now,
 			};
 
@@ -56,21 +84,6 @@ export const raceRouter = router({
 			}
 
 			await ctx.db.update(player).set(updateSet).where(eq(player.id, playerRecord.id));
-
-			// Award XP: score + placement bonus
-			const placementBonus = placement === 1 ? 500 : placement === 2 ? 250 : placement === 3 ? 100 : 0;
-			const xpGained = input.score + placementBonus;
-			const newTotalXp = playerRecord.totalXp + xpGained;
-			const levelInfo = getLevelFromXp(newTotalXp);
-			const previousLevel = playerRecord.level;
-
-			await ctx.db
-				.update(player)
-				.set({
-					totalXp: newTotalXp,
-					level: levelInfo.level,
-				})
-				.where(eq(player.id, playerRecord.id));
 
 			let newAchievements: string[] = [];
 			let newSkins: string[] = [];

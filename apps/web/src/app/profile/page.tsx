@@ -338,8 +338,8 @@ export default function ProfilePage() {
 	const totalObstacles = playerStats?.totalObstaclesCleared ?? 0;
 	const totalScore = playerStats?.totalScore ?? 0;
 	const totalXp = playerStats?.totalXp ?? 0;
-	const playerLevel = playerStats?.level ?? 1;
 	const levelInfo = getLevelFromXp(totalXp);
+	const playerLevel = levelInfo.level;
 
 	const racesPlayed = raceStats?.racesPlayed ?? 0;
 	const racesWon = raceStats?.racesWon ?? 0;
@@ -439,13 +439,12 @@ export default function ProfilePage() {
 							</span>
 							<div>
 								<p className="text-sm font-bold text-white">Level {playerLevel}</p>
-								<p className="text-xs text-gray-400">
-									{totalXp.toLocaleString()} XP total
-								</p>
+								<p className="text-xs text-gray-400">{totalXp.toLocaleString()} XP total</p>
 							</div>
 						</div>
 						<p className="text-xs text-gray-500">
-							{levelInfo.currentXp.toLocaleString()} / {levelInfo.xpForNextLevel.toLocaleString()} XP
+							{levelInfo.xpForCurrentLevel.toLocaleString()} /{" "}
+							{levelInfo.xpForNextLevel.toLocaleString()} XP
 						</p>
 					</div>
 					<div className="h-3 w-full overflow-hidden rounded-full bg-white/10">

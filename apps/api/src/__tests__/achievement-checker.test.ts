@@ -102,7 +102,7 @@ describe("isAchievementEarned", () => {
 		expect(isAchievementEarned(achievement, { ...defaultStats, racesPlayed: 1 })).toBe(true);
 	});
 
-	it("does not grant perfect_run (requires client data)", () => {
+	it("does not grant perfect_run without sufficient longestCleanRun", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const achievement = getAchievementById("perfect-dash")!;
 		expect(
@@ -111,6 +111,13 @@ describe("isAchievementEarned", () => {
 				highestDistance: 99999,
 			}),
 		).toBe(false);
+	});
+
+	it("grants perfect_run achievement when longestCleanRun meets distance", () => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const achievement = getAchievementById("perfect-dash")!;
+		expect(isAchievementEarned(achievement, { ...defaultStats, longestCleanRun: 999 })).toBe(false);
+		expect(isAchievementEarned(achievement, { ...defaultStats, longestCleanRun: 1000 })).toBe(true);
 	});
 
 	it("every achievement has a valid condition type", () => {

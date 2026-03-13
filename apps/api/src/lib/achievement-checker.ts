@@ -35,7 +35,12 @@ interface CheckResult {
 export async function checkAchievements(
 	db: DrizzleD1Database<typeof schema>,
 	playerId: string,
-	latestScore?: { score: number; distance: number; obstaclesCleared: number; longestCleanRun?: number },
+	latestScore?: {
+		score: number;
+		distance: number;
+		obstaclesCleared: number;
+		longestCleanRun?: number;
+	},
 ): Promise<CheckResult> {
 	// Get player stats
 	const playerRecord = await db.select().from(player).where(eq(player.id, playerId)).get();
@@ -53,7 +58,7 @@ export async function checkAchievements(
 
 	const unlockedIds = new Set(existing.map((e) => e.achievementId));
 
-	// Get highest single-run score and distance from score history
+	// Get highest single-run score, distance, and clean run from score history
 	const highestScoreRow = await db
 		.select({ value: score.score })
 		.from(score)
@@ -70,6 +75,14 @@ export async function checkAchievements(
 		.limit(1)
 		.get();
 
+	const highestCleanRunRow = await db
+		.select({ value: score.longestCleanRun })
+		.from(score)
+		.where(eq(score.playerId, playerId))
+		.orderBy(desc(score.longestCleanRun))
+		.limit(1)
+		.get();
+
 	const stats: PlayerStats = {
 		highestScore: Math.max(highestScoreRow?.value ?? 0, latestScore?.score ?? 0),
 		highestDistance: Math.max(highestDistanceRow?.value ?? 0, latestScore?.distance ?? 0),
@@ -79,7 +92,7 @@ export async function checkAchievements(
 		gamesPlayed: playerRecord.gamesPlayed,
 		racesPlayed: playerRecord.racesPlayed,
 		racesWon: playerRecord.racesWon,
-		longestCleanRun: latestScore?.longestCleanRun ?? 0,
+		longestCleanRun: Math.max(highestCleanRunRow?.value ?? 0, latestScore?.longestCleanRun ?? 0),
 	};
 
 	const checkStats: CheckStats = {
