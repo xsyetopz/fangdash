@@ -15,6 +15,7 @@ interface GameOverModalProps {
 		newAchievements: string[];
 		newSkins: string[];
 		achievementError?: boolean;
+		skinUnlockError?: boolean;
 	} | null;
 	submitError?: unknown;
 	isSignedIn?: boolean;
@@ -209,9 +210,9 @@ export function GameOverModal({
 					)}
 
 					{/* Achievement sync warning */}
-					{submitResult?.achievementError && (
+					{(submitResult?.achievementError || submitResult?.skinUnlockError) && (
 						<p className="mb-4 text-xs text-center font-mono text-yellow-400/60">
-							Some achievements may not have been recorded. They&apos;ll sync next game.
+							Some achievements or unlocks may not have been recorded. They&apos;ll sync next game.
 						</p>
 					)}
 

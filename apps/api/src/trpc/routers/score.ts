@@ -79,6 +79,7 @@ export const scoreRouter = router({
 			let newAchievements: string[] = [];
 			const newSkins: string[] = [];
 			let achievementError = false;
+			let skinUnlockError = false;
 
 			// Block 1: achievements
 			let checkStats: import("../../lib/achievement-checker.ts").CheckStats | undefined;
@@ -111,7 +112,7 @@ export const scoreRouter = router({
 					scoreId,
 					error: err,
 				});
-				achievementError = true;
+				skinUnlockError = true;
 			}
 
 			return {
@@ -119,6 +120,7 @@ export const scoreRouter = router({
 				newAchievements,
 				newSkins,
 				achievementError,
+				skinUnlockError,
 				xpGained: input.score,
 				levelUp: levelInfo.level > previousLevel,
 				newLevel: levelInfo.level,

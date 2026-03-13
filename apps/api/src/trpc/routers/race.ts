@@ -171,6 +171,7 @@ export const raceRouter = router({
 			let newAchievements: string[] = [];
 			const newSkins: string[] = [];
 			let achievementError = false;
+			let skinUnlockError = false;
 
 			// Block 1: achievements
 			let checkStats: import("../../lib/achievement-checker.ts").CheckStats | undefined;
@@ -203,7 +204,7 @@ export const raceRouter = router({
 					raceHistoryId,
 					error: err,
 				});
-				achievementError = true;
+				skinUnlockError = true;
 			}
 
 			return {
@@ -212,6 +213,7 @@ export const raceRouter = router({
 				newAchievements,
 				newSkins,
 				achievementError,
+				skinUnlockError,
 				xpGained,
 				levelUp: levelInfo.level > previousLevel,
 				newLevel: levelInfo.level,

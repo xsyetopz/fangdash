@@ -102,8 +102,10 @@ export default function PlayPage() {
 				if (data.levelUp) {
 					toast.success(`Level up! You are now level ${data.newLevel}!`);
 				}
-				if (data.achievementError) {
-					toast.warning("Some achievements may not have been recorded. They'll sync next game.");
+				if (data.achievementError || data.skinUnlockError) {
+					toast.warning(
+						"Some achievements or unlocks may not have been recorded. They'll sync next game.",
+					);
 				}
 			},
 			onError: (err) => {
