@@ -16,8 +16,8 @@ describe("ensurePlayer", () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const result = await ensurePlayer(db as any, userId);
 		expect(result).toBeTruthy();
-		expect(result!.id).toBe(playerId);
-		expect(result!.totalScore).toBe(500);
+		expect(result?.id).toBe(playerId);
+		expect(result?.totalScore).toBe(500);
 	});
 
 	it("should create new player if not existing", async () => {
@@ -26,9 +26,9 @@ describe("ensurePlayer", () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const result = await ensurePlayer(db as any, userId);
 		expect(result).toBeTruthy();
-		expect(result!.userId).toBe(userId);
-		expect(result!.equippedSkinId).toBe("gray-wolf");
-		expect(result!.level).toBe(1);
+		expect(result?.userId).toBe(userId);
+		expect(result?.equippedSkinId).toBe("gray-wolf");
+		expect(result?.level).toBe(1);
 	});
 
 	it("should set default values for new player", async () => {
@@ -36,10 +36,10 @@ describe("ensurePlayer", () => {
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const result = await ensurePlayer(db as any, userId);
-		expect(result!.totalScore).toBe(0);
-		expect(result!.totalDistance).toBe(0);
-		expect(result!.gamesPlayed).toBe(0);
-		expect(result!.totalXp).toBe(0);
+		expect(result?.totalScore).toBe(0);
+		expect(result?.totalDistance).toBe(0);
+		expect(result?.gamesPlayed).toBe(0);
+		expect(result?.totalXp).toBe(0);
 	});
 
 	it("should return same player on repeated calls", async () => {
@@ -49,7 +49,7 @@ describe("ensurePlayer", () => {
 		const result1 = await ensurePlayer(db as any, userId);
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const result2 = await ensurePlayer(db as any, userId);
-		expect(result1!.id).toBe(result2!.id);
+		expect(result1?.id).toBe(result2?.id);
 	});
 
 	it("should handle unique constraint violation gracefully", async () => {
@@ -60,6 +60,6 @@ describe("ensurePlayer", () => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const result = await ensurePlayer(db as any, userId);
 		expect(result).toBeTruthy();
-		expect(result!.userId).toBe(userId);
+		expect(result?.userId).toBe(userId);
 	});
 });

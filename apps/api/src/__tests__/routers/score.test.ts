@@ -319,9 +319,9 @@ describe("score router", () => {
 
 			const stats = await caller.score.getPlayerStats();
 			expect(stats).toBeTruthy();
-			expect(stats!.gamesPlayed).toBe(1);
-			expect(stats!.totalScore).toBe(150);
-			expect(stats!.totalXp).toBe(150);
+			expect(stats?.gamesPlayed).toBe(1);
+			expect(stats?.totalScore).toBe(150);
+			expect(stats?.totalXp).toBe(150);
 		});
 	});
 
@@ -361,12 +361,12 @@ describe("score router", () => {
 
 			const result = await caller.score.leaderboard();
 			expect(result).toHaveLength(3);
-			expect(result[0]!.rank).toBe(1);
-			expect(result[0]!.score).toBe(1000);
-			expect(result[1]!.rank).toBe(2);
-			expect(result[1]!.score).toBe(750);
-			expect(result[2]!.rank).toBe(3);
-			expect(result[2]!.score).toBe(500);
+			expect(result[0]?.rank).toBe(1);
+			expect(result[0]?.score).toBe(1000);
+			expect(result[1]?.rank).toBe(2);
+			expect(result[1]?.score).toBe(750);
+			expect(result[2]?.rank).toBe(3);
+			expect(result[2]?.score).toBe(500);
 		});
 
 		it("should filter by daily period", async () => {
@@ -390,7 +390,7 @@ describe("score router", () => {
 
 			const result2 = await caller.score.leaderboard({ period: "daily" });
 			expect(result2).toHaveLength(1);
-			expect(result2[0]!.score).toBe(200);
+			expect(result2[0]?.score).toBe(200);
 		});
 
 		it("should filter by ready mod correctly", async () => {
@@ -406,7 +406,7 @@ describe("score router", () => {
 
 			const result = await caller.score.leaderboard({ mods: MOD_FOG });
 			expect(result).toHaveLength(1);
-			expect(result[0]!.score).toBe(600);
+			expect(result[0]?.score).toBe(600);
 		});
 
 		it("should filter by difficulty", async () => {
@@ -422,11 +422,11 @@ describe("score router", () => {
 
 			const easyResults = await caller.score.leaderboard({ difficulty: "easy" });
 			expect(easyResults).toHaveLength(1);
-			expect(easyResults[0]!.score).toBe(500);
+			expect(easyResults[0]?.score).toBe(500);
 
 			const hardResults = await caller.score.leaderboard({ difficulty: "hard" });
 			expect(hardResults).toHaveLength(1);
-			expect(hardResults[0]!.score).toBe(300);
+			expect(hardResults[0]?.score).toBe(300);
 		});
 	});
 
@@ -438,8 +438,8 @@ describe("score router", () => {
 
 			const result = await caller.score.getPlayerStats();
 			expect(result).toBeTruthy();
-			expect(result!.gamesPlayed).toBe(5);
-			expect(result!.totalScore).toBe(1000);
+			expect(result?.gamesPlayed).toBe(5);
+			expect(result?.totalScore).toBe(1000);
 		});
 
 		it("should require authentication", async () => {

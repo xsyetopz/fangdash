@@ -20,6 +20,7 @@ export default tseslint.config(
 			"**/public/sw.js",
 			"**/public/workbox-*.js",
 			"**/scripts/**",
+			"**/.localflare/**",
 		],
 	},
 

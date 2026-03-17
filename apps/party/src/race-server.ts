@@ -74,7 +74,8 @@ export default class RaceServer implements Party.Server {
 
 		// Host migration
 		if (wasHost && this.room.players.length > 0) {
-			const newHost = this.room.players[0]!;
+			const newHost = this.room.players[0];
+			if (!newHost) return;
 			this.room.hostId = newHost.id;
 			this.room.players = this.room.players.map((p) => ({
 				...p,
