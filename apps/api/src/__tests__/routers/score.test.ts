@@ -7,7 +7,12 @@ import {
 	type TestDb,
 } from "../helpers/test-db.ts";
 import { createTestCaller } from "../helpers/test-caller.ts";
-import { SCORE_PER_SECOND, SCORE_PER_OBSTACLE } from "@fangdash/shared";
+import {
+	SCORE_PER_SECOND,
+	SCORE_PER_OBSTACLE,
+	MOD_FOG,
+	MOD_HEADWIND,
+} from "@fangdash/shared";
 
 describe("score router", () => {
 	let db: TestDb;
@@ -386,6 +391,22 @@ describe("score router", () => {
 			const result2 = await caller.score.leaderboard({ period: "daily" });
 			expect(result2).toHaveLength(1);
 			expect(result2[0]!.score).toBe(200);
+		});
+
+		it("should filter by ready mod correctly", async () => {
+			const caller = createTestCaller({ db });
+
+			const user1 = createTestUser(db, { name: "FogPlayer" });
+			const player1 = createTestPlayer(db, user1);
+			createTestScore(db, player1, { score: 600, mods: MOD_FOG });
+
+			const user2 = createTestUser(db, { name: "WindPlayer" });
+			const player2 = createTestPlayer(db, user2);
+			createTestScore(db, player2, { score: 400, mods: MOD_HEADWIND });
+
+			const result = await caller.score.leaderboard({ mods: MOD_FOG });
+			expect(result).toHaveLength(1);
+			expect(result[0]!.score).toBe(600);
 		});
 
 		it("should filter by difficulty", async () => {

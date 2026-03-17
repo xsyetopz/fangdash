@@ -54,10 +54,13 @@ export default function PlayPage() {
 	const [showMenu, setShowMenu] = useState(true);
 	const [selectedDifficulty, setSelectedDifficulty] = useState("easy");
 	const selectedDifficultyRef = useRef("easy");
+	const [selectedMods, setSelectedMods] = useState(0);
+	const selectedModsRef = useRef(0);
 	const [gameError, setGameError] = useState<string | null>(null);
 
-	// Keep ref in sync so countdown callback reads latest value
+	// Keep refs in sync so countdown callback reads latest value
 	selectedDifficultyRef.current = selectedDifficulty;
+	selectedModsRef.current = selectedMods;
 
 	const { data: session, isPending: sessionPending } = useSession();
 	// Prevent hydration mismatch: useSession returns isPending=false on the server
@@ -134,7 +137,7 @@ export default function PlayPage() {
 				// Show "GO!" briefly then launch
 				goTimeoutRef.current = setTimeout(() => {
 					goTimeoutRef.current = null;
-					gameChannelRef.current?.start(selectedDifficultyRef.current);
+					gameChannelRef.current?.start(selectedDifficultyRef.current, selectedModsRef.current);
 					startTimer();
 					setCountdown(null);
 				}, 700);
@@ -159,6 +162,7 @@ export default function PlayPage() {
 					duration,
 					seed: Date.now().toString(),
 					difficulty: selectedDifficultyRef.current as DifficultyName,
+					mods: selectedModsRef.current,
 				});
 			}
 		},
@@ -211,6 +215,7 @@ export default function PlayPage() {
 				parent: containerRef.current,
 				skinKey: equippedSkinKey,
 				startDifficulty: selectedDifficulty,
+				mods: selectedMods,
 				onStateUpdate: (state) => {
 					setGameState(state);
 				},
@@ -237,7 +242,7 @@ export default function PlayPage() {
 			audioRef.current = null;
 			gameChannelRef.current = null;
 		}
-	}, [equippedSkinKey, selectedDifficulty, handleGameOver]);
+	}, [equippedSkinKey, selectedDifficulty, selectedMods, handleGameOver]);
 
 	// Check onboarding status on mount
 	useEffect(() => {
@@ -362,6 +367,7 @@ export default function PlayPage() {
 			duration: finalElapsedTime,
 			seed: Date.now().toString(),
 			difficulty: selectedDifficultyRef.current as DifficultyName,
+			mods: selectedModsRef.current,
 		});
 	}, [finalState, finalElapsedTime, submitScore]);
 
@@ -437,6 +443,8 @@ export default function PlayPage() {
 						bestScore={bestScore}
 						selectedDifficulty={selectedDifficulty}
 						onSelectDifficulty={setSelectedDifficulty}
+						selectedMods={selectedMods}
+						onSelectMods={setSelectedMods}
 						userName={session?.user?.name ?? undefined}
 						userImage={session?.user?.image ?? undefined}
 						isPending={isPending}

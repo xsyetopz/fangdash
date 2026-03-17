@@ -19,7 +19,7 @@ export class Player {
 	private _grounded = true;
 	private _boundsRect = new Phaser.Geom.Rectangle(0, 0, 0, 0);
 
-	// Runtime-overridable constants (for debug menu)
+	// Runtime-overridable constants (for debug menu + mods)
 	overrides: {
 		gravity?: number;
 		fallGravity?: number;
@@ -28,10 +28,16 @@ export class Player {
 		maxFallVelocity?: number;
 		maxJumps?: number;
 		groundY?: number;
+		jumpCutMultiplier?: number;
 	} = {};
 
 	// Difficulty-driven gravity scaling
 	gravityMultiplier = 1.0;
+
+	// Mod-driven force/stagger fields
+	externalForceY = 0;
+	groundBobAmplitude = 1;
+	landingStaggerTimer = 0;
 
 	constructor(scene: Phaser.Scene, skinKey = "wolf-gray") {
 		this.sprite = scene.add.sprite(PLAYER_START_X, GROUND_Y, skinKey);
@@ -75,11 +81,14 @@ export class Player {
 
 	cutJump() {
 		if (this.velocityY < 0) {
-			this.velocityY *= JUMP_CUT_MULTIPLIER;
+			this.velocityY *= this.overrides.jumpCutMultiplier ?? JUMP_CUT_MULTIPLIER;
 		}
 	}
 
 	jump() {
+		if (this.landingStaggerTimer > 0) {
+			return;
+		}
 		const maxJumps = this.overrides.maxJumps ?? MAX_JUMPS;
 		if (!this._alive || this.jumpsRemaining <= 0) {
 			return;
@@ -108,6 +117,7 @@ export class Player {
 		// Asymmetric gravity: heavier when falling
 		const gravity = this.velocityY >= 0 ? fallGravity : riseGravity;
 		this.velocityY += gravity * dt;
+		this.velocityY += this.externalForceY * dt;
 
 		// Terminal velocity clamp
 		if (this.velocityY > maxFallVelocity) {
@@ -126,9 +136,14 @@ export class Player {
 			this._grounded = false;
 		}
 
+		// Decrement landing stagger timer
+		if (this.landingStaggerTimer > 0) {
+			this.landingStaggerTimer -= delta;
+		}
+
 		// Slight bob when grounded
 		if (this._grounded) {
-			this.sprite.y = groundY + Math.sin(Date.now() / 200) * 1;
+			this.sprite.y = groundY + Math.sin(Date.now() / 200) * this.groundBobAmplitude;
 		}
 	}
 
@@ -143,6 +158,9 @@ export class Player {
 		this.jumpsRemaining = this.overrides.maxJumps ?? MAX_JUMPS;
 		this.sprite.y = this.overrides.groundY ?? GROUND_Y;
 		this.sprite.clearTint();
+		this.externalForceY = 0;
+		this.groundBobAmplitude = 1;
+		this.landingStaggerTimer = 0;
 	}
 
 	setSkin(key: string) {
