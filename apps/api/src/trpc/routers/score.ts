@@ -136,6 +136,8 @@ export const scoreRouter = router({
 					distance: input.distance,
 					obstaclesCleared: input.obstaclesCleared,
 					longestCleanRun: input.longestCleanRun,
+					duration: input.duration,
+					mods: input.mods,
 				});
 				newAchievements = achievementResult.newAchievements;
 				newSkins.push(...achievementResult.newSkins);

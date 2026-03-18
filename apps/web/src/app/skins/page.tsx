@@ -1,6 +1,10 @@
 "use client";
 
-import type { SkinDefinition, SkinRarity, SkinUnlockCondition } from "@fangdash/shared";
+import type {
+  SkinDefinition,
+  SkinRarity,
+  SkinUnlockCondition,
+} from "@fangdash/shared";
 import { SKINS } from "@fangdash/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
@@ -17,164 +21,217 @@ import { Skeleton } from "@/components/ui/skeleton";
 /*  Rarity colour map                                                  */
 /* ------------------------------------------------------------------ */
 const RARITY_STYLES: Record<SkinRarity, { badge: string; border: string }> = {
-	common: { badge: "secondary", border: "border-muted-foreground/30" },
-	uncommon: { badge: "emerald", border: "border-emerald-500/40" },
-	rare: { badge: "default", border: "border-primary/40" },
-	epic: { badge: "purple", border: "border-purple-500/40" },
-	legendary: { badge: "gold", border: "border-yellow-500/40" },
+  common: { badge: "secondary", border: "border-muted-foreground/30" },
+  uncommon: { badge: "emerald", border: "border-emerald-500/40" },
+  rare: { badge: "default", border: "border-primary/40" },
+  epic: { badge: "purple", border: "border-purple-500/40" },
+  legendary: { badge: "gold", border: "border-yellow-500/40" },
 };
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 function unlockConditionText(condition: SkinUnlockCondition): string {
-	switch (condition.type) {
-		case "default":
-			return "Unlocked by default";
-		case "score":
-			return `Score ${condition.threshold.toLocaleString()} points`;
-		case "distance":
-			return `Run ${condition.threshold.toLocaleString()} metres`;
-		case "games_played":
-			return `Play ${condition.count.toLocaleString()} games`;
-		case "achievement":
-			return `Unlock achievement: ${condition.achievementId}`;
-	}
+  switch (condition.type) {
+    case "default":
+      return "Unlocked by default";
+    case "score":
+      return `Score ${condition.threshold.toLocaleString()} points`;
+    case "distance":
+      return `Run ${condition.threshold.toLocaleString()} metres`;
+    case "games_played":
+      return `Play ${condition.count.toLocaleString()} games`;
+    case "achievement":
+      return `Unlock achievement: ${condition.achievementId}`;
+  }
 }
 
 /* ------------------------------------------------------------------ */
 /*  SkinCard                                                           */
 /* ------------------------------------------------------------------ */
 interface GallerySkin extends SkinDefinition {
-	unlocked: boolean;
+  unlocked: boolean;
 }
 
-function SkinCard({ skin, equipped }: { skin: GallerySkin; equipped: boolean }) {
-	const rarity = RARITY_STYLES[skin.rarity];
+function SkinCard({
+  skin,
+  equipped,
+  unlockPercent,
+}: {
+  skin: GallerySkin;
+  equipped: boolean;
+  unlockPercent?: number | null;
+}) {
+  const rarity = RARITY_STYLES[skin.rarity];
 
-	return (
-		<Card
-			className={cn(
-				"relative flex flex-col items-center p-4 transition-all border-2",
-				equipped
-					? "border-primary shadow-[0_0_20px_rgba(15,172,237,0.4)]"
-					: skin.unlocked
-						? rarity.border
-						: "border-border opacity-70",
-			)}
-		>
-			{equipped && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Equipped</Badge>}
+  return (
+    <Card
+      className={cn(
+        "relative flex flex-col items-center p-4 transition-all border-2",
+        equipped
+          ? "border-primary shadow-[0_0_20px_rgba(15,172,237,0.4)]"
+          : skin.unlocked
+          ? rarity.border
+          : "border-border opacity-70",
+      )}
+    >
+      {equipped && (
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
+          Equipped
+        </Badge>
+      )}
 
-			<div className="relative mb-3 mt-2 h-24 w-24">
-				<Image
-					src={`/wolves/${skin.spriteKey}.png`}
-					alt={skin.name}
-					fill={true}
-					className={cn("object-contain", !skin.unlocked && "grayscale")}
-					sizes="96px"
-				/>
-				{!skin.unlocked && (
-					<div className="absolute inset-0 flex items-center justify-center">
-						<Lock className="size-8 text-muted-foreground" />
-					</div>
-				)}
-			</div>
+      <div className="relative mb-3 mt-2 h-24 w-24">
+        <Image
+          src={`/wolves/${skin.spriteKey}.png`}
+          alt={skin.name}
+          fill={true}
+          className={cn("object-contain", !skin.unlocked && "grayscale")}
+          sizes="96px"
+        />
+        {!skin.unlocked && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Lock className="size-8 text-muted-foreground" />
+          </div>
+        )}
+      </div>
 
-			<h3 className="text-center text-lg font-bold text-foreground">{skin.name}</h3>
+      <h3 className="text-center text-lg font-bold text-foreground">
+        {skin.name}
+      </h3>
 
-			<Badge
-				variant={rarity.badge as "default" | "secondary" | "emerald" | "purple" | "gold"}
-				className="mt-1 uppercase tracking-wider"
-			>
-				{skin.rarity}
-			</Badge>
+      <Badge
+        variant={rarity.badge as
+          | "default"
+          | "secondary"
+          | "emerald"
+          | "purple"
+          | "gold"}
+        className="mt-1 uppercase tracking-wider"
+      >
+        {skin.rarity}
+      </Badge>
 
-			<p className="mt-2 text-center text-sm text-muted-foreground">{skin.description}</p>
+      <p className="mt-2 text-center text-sm text-muted-foreground">
+        {skin.description}
+      </p>
 
-			<div className="mt-auto pt-4">
-				{skin.unlocked ? (
-					equipped ? (
-						<span className="text-sm font-medium text-primary">Currently Equipped</span>
-					) : (
-						<span className="text-sm font-medium text-emerald-400">Unlocked</span>
-					)
-				) : (
-					<p className="text-center text-xs text-muted-foreground">
-						{unlockConditionText(skin.unlockCondition)}
-					</p>
-				)}
-			</div>
-		</Card>
-	);
+      <div className="mt-auto pt-4 text-center">
+        {skin.unlocked
+          ? (
+            equipped
+              ? (
+                <span className="text-sm font-medium text-primary">
+                  Currently Equipped
+                </span>
+              )
+              : (
+                <span className="text-sm font-medium text-emerald-400">
+                  Unlocked
+                </span>
+              )
+          )
+          : (
+            <p className="text-xs text-muted-foreground">
+              {unlockConditionText(skin.unlockCondition)}
+            </p>
+          )}
+        {unlockPercent != null && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {unlockPercent.toFixed(1)}% of players
+          </p>
+        )}
+      </div>
+    </Card>
+  );
 }
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 export default function SkinsPage() {
-	const { data: session } = useSession();
-	const signedIn = !!session?.user;
+  const { data: session } = useSession();
+  const signedIn = !!session?.user;
 
-	const trpc = useTRPC();
+  const trpc = useTRPC();
 
-	const galleryQuery = useQuery({
-		...trpc.skin.gallery.queryOptions(),
-		enabled: signedIn,
-	});
+  const galleryQuery = useQuery({
+    ...trpc.skin.gallery.queryOptions(),
+    enabled: signedIn,
+  });
 
-	const equippedQuery = useQuery({
-		...trpc.skin.getEquippedSkin.queryOptions(),
-		enabled: signedIn,
-	});
+  const equippedQuery = useQuery({
+    ...trpc.skin.getEquippedSkin.queryOptions(),
+    enabled: signedIn,
+  });
 
-	const equippedSkinId = equippedQuery.data?.skinId ?? "gray-wolf";
+  const equippedSkinId = equippedQuery.data?.skinId ?? "gray-wolf";
 
-	const skins: GallerySkin[] = signedIn
-		? (galleryQuery.data ?? [])
-		: SKINS.map((s) => ({
-				...s,
-				unlocked: s.unlockCondition.type === "default",
-			}));
+  const skins: GallerySkin[] = signedIn
+    ? (galleryQuery.data ?? [])
+    : SKINS.map((s) => ({
+      ...s,
+      unlocked: s.unlockCondition.type === "default",
+    }));
 
-	const isLoading = signedIn && (galleryQuery.isLoading || equippedQuery.isLoading);
+  const { data: skinStats } = useQuery(trpc.skin.getStats.queryOptions());
 
-	return (
-		<main className="mx-auto min-h-screen max-w-6xl px-4 py-12">
-			<h1 className="mb-2 text-center text-4xl font-extrabold text-foreground">Skins Gallery</h1>
-			<p className="mb-4 text-center text-muted-foreground">
-				Collect wolf skins by playing the game
-			</p>
-			{signedIn && (
-				<p className="mb-10 text-center">
-					<Link href="/settings" className="text-sm text-primary hover:underline">
-						Go to Settings to change your equipped skin
-					</Link>
-				</p>
-			)}
+  const isLoading = signedIn &&
+    (galleryQuery.isLoading || equippedQuery.isLoading);
 
-			{!signedIn && (
-				<Card className="mb-8 border-primary/30 bg-primary/5">
-					<CardContent className="p-4 text-center">
-						<p className="text-sm text-primary">Sign in to track progress and equip skins</p>
-					</CardContent>
-				</Card>
-			)}
+  return (
+    <main className="mx-auto min-h-screen max-w-6xl px-4 py-12">
+      <h1 className="mb-2 text-center text-4xl font-extrabold text-foreground">
+        Skins Gallery
+      </h1>
+      <p className="mb-4 text-center text-muted-foreground">
+        Collect wolf skins by playing the game
+      </p>
+      {signedIn && (
+        <p className="mb-10 text-center">
+          <Link
+            href="/settings"
+            className="text-sm text-primary hover:underline"
+          >
+            Go to Settings to change your equipped skin
+          </Link>
+        </p>
+      )}
 
-			{isLoading && (
-				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-					{Array.from({ length: 6 }).map((_, i) => (
-						<Skeleton key={i} className="h-72 rounded-2xl" />
-					))}
-				</div>
-			)}
+      {!signedIn && (
+        <Card className="mb-8 border-primary/30 bg-primary/5">
+          <CardContent className="p-4 text-center">
+            <p className="text-sm text-primary">
+              Sign in to track progress and equip skins
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
-			{!isLoading && (
-				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-					{skins.map((skin) => (
-						<SkinCard key={skin.id} skin={skin} equipped={signedIn && equippedSkinId === skin.id} />
-					))}
-				</div>
-			)}
-		</main>
-	);
+      {isLoading && (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-72 rounded-2xl" />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {skins.map((skin) => (
+            <SkinCard
+              key={skin.id}
+              skin={skin}
+              equipped={signedIn && equippedSkinId === skin.id}
+              unlockPercent={(() => {
+                const stat = skinStats?.[skin.id];
+                if (!stat || stat.totalPlayers === 0) return null;
+                return (stat.unlockCount / stat.totalPlayers) * 100;
+              })()}
+            />
+          ))}
+        </div>
+      )}
+    </main>
+  );
 }
