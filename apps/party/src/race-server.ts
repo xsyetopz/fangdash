@@ -6,10 +6,10 @@ import type {
 	ValidatedClientMessage,
 } from "@fangdash/shared";
 import {
+	clientMessageSchema,
 	MAX_PLAYERS_PER_RACE,
 	MIN_PLAYERS_TO_START,
 	RACE_COUNTDOWN_SECONDS,
-	clientMessageSchema,
 } from "@fangdash/shared";
 import type * as Party from "partykit/server";
 
@@ -72,6 +72,14 @@ export default class RaceServer implements Party.Server {
 		this.room.players = this.room.players.filter((p) => p.id !== conn.id);
 		this.broadcast({ type: "player_left", payload: { id: conn.id } });
 
+		// Reset room if everyone left
+		if (this.room.players.length === 0) {
+			this.room.status = "waiting";
+			this.room.hostId = null;
+			this.countdownInProgress = false;
+			return;
+		}
+
 		// Host migration
 		if (wasHost) {
 			const newHost = this.room.players[0];
@@ -81,19 +89,28 @@ export default class RaceServer implements Party.Server {
 					...p,
 					isHost: p.id === newHost.id,
 				}));
-				this.broadcast({ type: "host_changed", payload: { hostId: newHost.id } });
+				this.broadcast({
+					type: "host_changed",
+					payload: { hostId: newHost.id },
+				});
 			} else {
 				this.room.hostId = null;
 				this.broadcast({ type: "host_changed", payload: { hostId: null } });
 			}
 		}
 
-		if (this.room.status === "racing" && this.room.players.every((p) => !p.alive)) {
+		if (
+			this.room.status === "racing" &&
+			this.room.players.every((p) => !p.alive)
+		) {
 			this.endRace();
 		}
 	}
 
-	private handleJoin(conn: Party.Connection, payload: { username: string; skinId: string }) {
+	private handleJoin(
+		conn: Party.Connection,
+		payload: { username: string; skinId: string },
+	) {
 		if (this.room.players.some((p) => p.id === conn.id)) {
 			return;
 		}
@@ -132,10 +149,14 @@ export default class RaceServer implements Party.Server {
 		if (!player) return;
 
 		player.ready = true;
-		this.broadcast({ type: "player_ready", payload: { id: conn.id, ready: true } });
+		this.broadcast({
+			type: "player_ready",
+			payload: { id: conn.id, ready: true },
+		});
+
+		if (this.room.players.length < MIN_PLAYERS_TO_START) return;
 
 		const isHost = conn.id === this.room.hostId;
-		if (!isHost && this.room.players.length < MIN_PLAYERS_TO_START) return;
 		if (isHost) {
 			this.startCountdown();
 		}
@@ -147,8 +168,21 @@ export default class RaceServer implements Party.Server {
 		this.room.status = "countdown";
 
 		for (let i = RACE_COUNTDOWN_SECONDS; i > 0; i--) {
+			// Bail out if everyone left during countdown
+			if (this.room.players.length === 0) {
+				this.room.status = "waiting";
+				this.countdownInProgress = false;
+				return;
+			}
 			this.broadcast({ type: "countdown", payload: { seconds: i } });
 			await new Promise((r) => setTimeout(r, 1000));
+		}
+
+		// Final check — players may have left during the last tick
+		if (this.room.players.length === 0) {
+			this.room.status = "waiting";
+			this.countdownInProgress = false;
+			return;
 		}
 
 		this.room.status = "racing";
@@ -157,7 +191,10 @@ export default class RaceServer implements Party.Server {
 		this.broadcast({ type: "race_start", payload: { seed: this.room.seed } });
 	}
 
-	private handleUpdate(conn: Party.Connection, payload: { distance: number; score: number }) {
+	private handleUpdate(
+		conn: Party.Connection,
+		payload: { distance: number; score: number },
+	) {
 		if (this.room.status !== "racing") {
 			return;
 		}
@@ -201,8 +238,13 @@ export default class RaceServer implements Party.Server {
 		if (conn.id !== this.room.hostId) return;
 		if (this.room.status !== "waiting") return;
 
-		this.room.players = this.room.players.filter((p) => p.id !== payload.playerId);
-		this.broadcast({ type: "player_kicked", payload: { id: payload.playerId } });
+		this.room.players = this.room.players.filter(
+			(p) => p.id !== payload.playerId,
+		);
+		this.broadcast({
+			type: "player_kicked",
+			payload: { id: payload.playerId },
+		});
 
 		// Close the kicked player's connection
 		for (const connection of this.party.getConnections()) {

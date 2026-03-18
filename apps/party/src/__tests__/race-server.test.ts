@@ -1,6 +1,6 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
-import RaceServer from "../race-server.ts";
 import type * as Party from "partykit/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import RaceServer from "../race-server.ts";
 
 function createMockConnection(id: string): Party.Connection {
 	return {
@@ -40,7 +40,9 @@ describe("RaceServer", () => {
 			server.onConnect(conn);
 
 			expect(conn.send).toHaveBeenCalledTimes(1);
-			const sent = JSON.parse((conn.send as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]);
+			const sent = JSON.parse(
+				(conn.send as ReturnType<typeof vi.fn>).mock.calls[0]?.[0],
+			);
 			expect(sent.type).toBe("room_state");
 			expect(sent.payload.status).toBe("waiting");
 		});
@@ -121,7 +123,7 @@ describe("RaceServer", () => {
 			expect(server.room.players[0]?.ready).toBe(true);
 		});
 
-		it("should start countdown when host readies", () => {
+		it("should not start countdown with only one player", () => {
 			const conn = createMockConnection("player-1");
 			server.onConnect(conn);
 			sendMessage(server, conn, {
@@ -130,7 +132,25 @@ describe("RaceServer", () => {
 			});
 			sendMessage(server, conn, { type: "ready" });
 
-			// Countdown should start (status changes to countdown)
+			// Should stay in waiting — need MIN_PLAYERS_TO_START
+			expect(server.room.status).toBe("waiting");
+		});
+
+		it("should start countdown when host readies with enough players", () => {
+			const conn1 = createMockConnection("player-1");
+			const conn2 = createMockConnection("player-2");
+			server.onConnect(conn1);
+			server.onConnect(conn2);
+			sendMessage(server, conn1, {
+				type: "join",
+				payload: { username: "Host", skinId: "gray-wolf" },
+			});
+			sendMessage(server, conn2, {
+				type: "join",
+				payload: { username: "Player2", skinId: "gray-wolf" },
+			});
+			sendMessage(server, conn1, { type: "ready" });
+
 			expect(server.room.status).toBe("countdown");
 		});
 	});
@@ -337,6 +357,47 @@ describe("RaceServer", () => {
 	});
 
 	describe("onClose", () => {
+		it("should reset room when all players leave", () => {
+			const conn = createMockConnection("player-1");
+			server.onConnect(conn);
+			sendMessage(server, conn, {
+				type: "join",
+				payload: { username: "Player", skinId: "gray-wolf" },
+			});
+
+			server.onClose(conn);
+
+			expect(server.room.players.length).toBe(0);
+			expect(server.room.status).toBe("waiting");
+			expect(server.room.hostId).toBeNull();
+		});
+
+		it("should reset countdown state when all players leave during countdown", () => {
+			const conn1 = createMockConnection("player-1");
+			const conn2 = createMockConnection("player-2");
+			server.onConnect(conn1);
+			server.onConnect(conn2);
+			sendMessage(server, conn1, {
+				type: "join",
+				payload: { username: "Host", skinId: "gray-wolf" },
+			});
+			sendMessage(server, conn2, {
+				type: "join",
+				payload: { username: "Player2", skinId: "gray-wolf" },
+			});
+
+			// Start countdown
+			sendMessage(server, conn1, { type: "ready" });
+			expect(server.room.status).toBe("countdown");
+
+			// Both players leave
+			server.onClose(conn1);
+			server.onClose(conn2);
+
+			expect(server.room.status).toBe("waiting");
+			expect(server.room.players.length).toBe(0);
+		});
+
 		it("should remove player on disconnect", () => {
 			const conn = createMockConnection("player-1");
 			server.onConnect(conn);
